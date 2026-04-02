@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Snake - 霓虹贪吃蛇</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #1a1a2e;
+            --bg-light: #16213e;
+            --snake-head: #00d9ff;
+            --snake-body: #0099cc;
+            --food: #ff6b35;
+            --obstacle: #7b2cbf;
+            --accent: #00f5d4;
+            --text: #ffffff;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-light) 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Rajdhani', sans-serif;
+            color: var(--text);
+            padding: 20px;
+        }
+
+        .game-container {
+            background: rgba(22, 33, 62, 0.8);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 0 40px rgba(0, 217, 255, 0.2);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--snake-head);
+            text-shadow: 0 0 10px var(--snake-head);
+        }
+
+        .score-board {
+            display: flex;
+            gap: 30px;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .score-item {
+            text-align: center;
+        }
+
+        .score-label {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.6);
+            letter-spacing: 0.2em;
+        }
+
+        .score-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-shadow: 0 0 10px var(--accent);
+        }
+
+        #gameCanvas {
+            border: 2px solid var(--snake-head);
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .btn {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            padding: 12px 30px;
+            border: 2px solid var(--snake-head);
+            background: transparent;
+            color: var(--snake-head);
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            transition: all 0.3s ease;
+            border-radius: 5px;
+        }
+
+        .btn:hover {
+            background: var(--snake-head);
+            color: var(--bg-dark);
+            box-shadow: 0 0 20px var(--snake-head);
+        }
+
+        .mode-select {
+            display: flex;
+            gap: 10px;
+        }
+
+        .mode-btn {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.8rem;
+            padding: 8px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: transparent;
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 3px;
+        }
+
+        .mode-btn.active {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .pause-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .pause-overlay.active {
+            display: flex;
+        }
+
+        .pause-box {
+            background: var(--bg-dark);
+            border: 2px solid var(--snake-head);
+            padding: 40px 60px;
+            text-align: center;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0, 217, 255, 0.5);
+        }
+
+        .pause-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            color: var(--snake-head);
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px var(--snake-head);
+        }
+
+        .game-over-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .game-over-overlay.active {
+            display: flex;
+        }
+
+        .game-over-box {
+            text-align: center;
+        }
+
+        .game-over-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3rem;
+            color: var(--food);
+            text-shadow: 0 0 30px var(--food);
+            margin-bottom: 20px;
+        }
+
+        .final-score {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+        }
+
+        .final-score span {
+            color: var(--accent);
+        }
+
+        .winner-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            color: var(--food);
+            margin-bottom: 20px;
+        }
+
+        .restart-hint {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <div class="logo">霓虹贪吃蛇</div>
+            <div class="score-board">
+                <div class="score-item">
+                    <div class="score-label">蓝蛇</div>
+                    <div class="score-value" id="score">0</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">红蛇</div>
+                    <div class="score-value" id="score2">0</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">最高分</div>
+                    <div class="score-value" id="highScore">0</div>
+                </div>
+            </div>
+        </div>
+
+        <canvas id="gameCanvas" width="600" height="600"></canvas>
+
+        <div class="controls">
+            <button class="btn" id="startBtn">开始</button>
+            <div class="mode-select">
+                <button class="mode-btn active" data-mode="classic">经典</button>
+                <button class="mode-btn" data-mode="adventure">冒险</button>
+            </div>
+            <button class="btn" id="pauseBtn">暂停</button>
+        </div>
+    </div>
+
+    <div class="pause-overlay" id="pauseOverlay">
+        <div class="pause-box">
+            <div class="pause-title">已暂停</div>
+            <button class="btn" onclick="resumeGame()">继续</button>
+        </div>
+    </div>
+
+    <div class="game-over-overlay" id="gameOverOverlay">
+        <div class="game-over-box">
+            <div class="game-over-title">游戏结束</div>
+            <div class="final-score"><span id="finalScore">0</span> vs <span id="finalScore2">0</span></div>
+            <div class="winner-text" id="winnerText"></div>
+            <div class="restart-hint">按空格键重新开始</div>
+        </div>
+    </div>
+
+    <script src="src/game.js"></script>
+</body>
+</html>
