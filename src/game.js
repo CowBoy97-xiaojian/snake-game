@@ -11,6 +11,79 @@ const CONFIG = {
     slowDownColor: '#8338ec'
 };
 
+// ==================== MCP 监控配置 ====================
+const MCP_MONITOR = {
+    enabled: true,
+    port: 8765,
+    ws: null,
+    frameCount: 0,
+    lastFpsUpdate: Date.now(),
+    fps: 0,
+
+    init() {
+        if (!this.enabled) return;
+        this.connect();
+    },
+
+    connect() {
+        try {
+            this.ws = new WebSocket('ws://localhost:' + this.port);
+            this.ws.onopen = () => console.log('[MCP Monitor] Connected');
+            this.ws.onclose = () => {
+                console.log('[MCP Monitor] Disconnected, reconnecting...');
+                setTimeout(() => this.connect(), 3000);
+            };
+            this.ws.onerror = () => this.ws.close();
+        } catch (e) {
+            setTimeout(() => this.connect(), 3000);
+        }
+    },
+
+    send(data) {
+        if (!this.enabled || !this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+        try {
+            this.ws.send(JSON.stringify(data));
+        } catch (e) {}
+    },
+
+    updateFps() {
+        this.frameCount++;
+        const now = Date.now();
+        const elapsed = now - this.lastFpsUpdate;
+        if (elapsed >= 1000) {
+            this.fps = Math.round(this.frameCount * 1000 / elapsed);
+            this.frameCount = 0;
+            this.lastFpsUpdate = now;
+        }
+    },
+
+    report() {
+        if (!this.enabled) return;
+        this.updateFps();
+
+        this.send({
+            type: 'game_update',
+            timestamp: Date.now(),
+            fps: this.fps,
+            snake1: game.snake.map(s => ({ x: s.x, y: s.y })),
+            snake2: game.snake2.map(s => ({ x: s.x, y: s.y })),
+            food: game.food ? { x: game.food.x, y: game.food.y } : null,
+            food2: game.food2 ? { x: game.food2.x, y: game.food2.y } : null,
+            obstacles: game.obstacles.map(o => ({ x: o.x, y: o.y })),
+            powerups: game.powerups.map(p => ({ x: p.x, y: p.y, type: p.type })),
+            score: game.score,
+            score2: game.score2,
+            is_running: game.isRunning,
+            is_paused: game.isPaused,
+            is_game_over: game.isGameOver,
+            current_speed: game.currentSpeed,
+            mode: game.mode || 'classic',
+            shield_active: game.shieldActive,
+            shield_active2: game.shieldActive2
+        });
+    }
+};
+
 // ==================== 游戏状态 ====================
 const game = {
     canvas: null,
@@ -95,6 +168,7 @@ function init() {
     game.canvas = document.getElementById('gameCanvas');
     game.ctx = game.canvas.getContext('2d');
 
+    MCP_MONITOR.init();
     loadHighScore();
     setupEventListeners();
     drawGame();
@@ -318,6 +392,7 @@ function gameLoop() {
 
     update();
     drawGame();
+    MCP_MONITOR.report();
 
     game.gameLoop = setTimeout(gameLoop, game.currentSpeed);
 }

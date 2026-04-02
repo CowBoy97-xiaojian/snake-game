@@ -35,6 +35,47 @@
 
 直接在浏览器中打开 `index.html` 即可开始游戏。
 
+## MCP 实时监控
+
+游戏内置 MCP (Model Context Protocol) 服务器，支持实时监控游戏数据。
+
+### 启动监控服务器
+
+```bash
+cd mcp
+npm install
+npm start
+```
+
+服务器将在 `ws://localhost:8765` 启动。
+
+### 可监控的数据
+
+| 工具 | 说明 |
+|------|------|
+| `get_fps` | 当前游戏的 FPS |
+| `get_snake_positions` | 两条蛇的实时位置坐标 |
+| `get_food_position` | 食物和特殊食物的位置 |
+| `get_game_stats` | 游戏统计（分数、状态、速度） |
+| `get_all_stats` | 所有监控数据 |
+
+### WebSocket 消息格式
+
+游戏会自动通过 WebSocket 上报数据：
+
+```json
+{
+  "type": "game_update",
+  "fps": 60,
+  "snake1": [{"x": 10, "y": 15}, {"x": 11, "y": 15}],
+  "snake2": [{"x": 20, "y": 15}, {"x": 19, "y": 15}],
+  "food": {"x": 15, "y": 15},
+  "score": 50,
+  "is_running": true,
+  "is_paused": false
+}
+```
+
 ---
 
 *Made with ❤️ by Claude Code*

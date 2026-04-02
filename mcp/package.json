@@ -1,0 +1,12 @@
+{
+  "name": "snake-game-mcp",
+  "version": "1.0.0",
+  "description": "Snake Game MCP Server for real-time monitoring",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.14.0"
+  }
+}
